@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ibaba Eco Action</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f7fafc;
+}
+
+/* HEADER */
+header {
+    background: #e53e7e;
+    color: white;
+    text-align: center;
+    padding: 25px;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+/* DASHBOARD GRID */
+#dashboard {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* PLANNING BOARD */
+#planning {
+    display: flex;
+    gap: 15px;
+}
+
+.quarter {
+    background: #edf2f7;
+    border-radius: 10px;
+    padding: 10px;
+    width: 100%;
+}
+
+.quarter h3 {
+    text-align: center;
+    background: #bee3f8;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.note {
+    height: 60px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.yellow { background: #f6c23e; }
+.green { background: #48bb78; }
+.blue { background: #90cdf4; }
+
+/* RIGHT PANEL */
+#rightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* MAP */
+#map {
+    height: 250px;
+    border-radius: 10px;
+}
+
+/* VOLUNTEER TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+th {
+    background: #e53e7e;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+}
+
+td {
+    border: 1px solid #cbd5e0;
+    height: 35px;
+}
+
+td span {
+    display: inline-block;
+    min-width: 100%;
+}
+
+td span[contenteditable] {
+    cursor: text;
+}
+
+td button {
+    background: #e53e7e;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+td button:hover {
+    background: #c53030;
+}
+
+/* GENERAL UPDATES */
+#updates {
+    display: flex;
+    gap: 10px;
+}
+
+#updates .label {
+    background: #f6c23e;
+    padding: 10px;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+#updates .content {
+    background: white;
+    flex: 1;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+/* FORM */
+#form {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+input, textarea, button {
+    width: 100%;
+    margin-top: 5px;
+    padding: 8px;
+}
+
+button.submit {
+    background: #2b6cb0;
+}
+button.submit:hover {
+    background: #2c5282;
+}
+</style>
+</head>
+
+<body>
+
+<header>Subic Ibaba Eco Action</header>
+
+<div id="dashboard">
+
+    <!-- LEFT: PLANNING BOARD -->
+    <div id="planning">
+        <div class="quarter">
+            <h3>JAN–MAR</h3>
+            <div class="note yellow"></div>
+            <div class="note yellow"></div>
+            <div class="note blue"></div>
+            <div class="note green"></div>
+        </div>
+
+        <div class="quarter">
+            <h3>APR–JUNE</h3>
+            <div class="note green"></div>
+            <div class="note green"></div>
+            <div class="note yellow"></div>
+            <div class="note blue"></div>
+        </div>
+
+        <div class="quarter">
+            <h3>JULY–SEPT</h3>
+            <div class="note blue"></div>
+            <div class="note green"></div>
+            <div class="note yellow"></div>
+            <div class="note blue"></div>
+        </div>
+
+        <div class="quarter">
+            <h3>OCT–DEC</h3>
+            <div class="note green"></div>
+            <div class="note yellow"></div>
+            <div class="note yellow"></div>
+            <div class="note blue"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="rightPanel">
+
+        <!-- MAP -->
+        <div id="map"></div>
+
+        <!-- VOLUNTEER TABLE -->
+        <table id="volunteerTable">
+            <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Availability</th>
+                <th>Action</th>
+            </tr>
+        </table>
+
+        <!-- GENERAL UPDATES -->
+        <div id="updates">
+            <div class="label">GENERAL UPDATES</div>
+            <div class="content">No new updates.</div>
+        </div>
+
+        <!-- VOLUNTEER FORM -->
+        <div id="form">
+            <h3>Volunteer Sign-Up</h3>
+            <form id="signupForm">
+                <label>Name</label>
+                <input type="text" id="name" required>
+
+                <label>Contact</label>
+                <input type="tel" id="contact" required>
+
+                <label>Availability</label>
+                <textarea id="availability" required></textarea>
+
+                <button type="submit" class="submit">Add Volunteer</button>
+            </form>
+            <p id="msg"></p>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* INITIALIZE MAP */
+const map = L.map('map').setView([13.9360, 120.9250], 15);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const areas = [
+    [[13.9375,120.9235],[13.9375,120.9275],[13.9345,120.9275],[13.9345,120.9235]],
+    [[13.9390,120.9255],[13.9390,120.9290],[13.9365,120.9290],[13.9365,120.9255]]
+];
+
+areas.forEach(a => {
+    L.polygon(a,{
+        color:'red',
+        fillColor:'#f56565',
+        fillOpacity:0.6
+    }).addTo(map).bindPopup("🚨 Needs Cleaning");
+});
+
+/* VOLUNTEER FORM & TABLE */
+const table = document.getElementById("volunteerTable");
+const form = document.getElementById("signupForm");
+
+/* LOAD SAVED DATA */
+let volunteers = JSON.parse(localStorage.getItem("volunteers")) || [];
+volunteers.forEach(addRow);
+
+/* ADD VOLUNTEER */
+form.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const volunteer = {
+        name: document.getElementById("name").value,
+        contact: document.getElementById("contact").value,
+        availability: document.getElementById("availability").value
+    };
+
+    volunteers.push(volunteer);
+    localStorage.setItem("volunteers", JSON.stringify(volunteers));
+
+    addRow(volunteer);
+    form.reset();
+    document.getElementById("msg").innerText = "✅ Volunteer added!";
+});
+
+/* CREATE ROW FUNCTION WITH DELETE */
+function addRow(v) {
+    const row = table.insertRow(-1);
+    ["name", "contact", "availability"].forEach(key => {
+        const cell = row.insertCell();
+        const span = document.createElement("span");
+        span.textContent = v[key];
+        span.contentEditable = false;
+
+        span.addEventListener("input", saveAll);
+        cell.appendChild(span);
+    });
+
+    // Delete button
+    const actionCell = row.insertCell();
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", () => {
+        row.remove();
+        saveAll();
+    });
+    actionCell.appendChild(delBtn);
+}
+
+/* SAVE ALL EDITS */
+function saveAll() {
+    volunteers = [];
+    [...table.rows].slice(1).forEach(row => {
+        volunteers.push({
+            name: row.cells[0].innerText,
+            contact: row.cells[1].innerText,
+            availability: row.cells[2].innerText
+        });
+    });
+    localStorage.setItem("volunteers", JSON.stringify(volunteers));
+}
+</script>
+
+</body>
+</html>

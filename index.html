@@ -15,6 +15,7 @@ body {
     background: #eef5ea;
 }
 
+/* HEADER */
 header {
     background: linear-gradient(180deg, #6fbf73, #4c9a58);
     color: white;
@@ -22,8 +23,10 @@ header {
     padding: 25px;
     font-size: 36px;
     font-weight: bold;
+    border-bottom: 6px solid #3d7f46;
 }
 
+/* DASHBOARD GRID */
 #dashboard {
     display: grid;
     grid-template-columns: 3fr 2fr;
@@ -31,6 +34,7 @@ header {
     padding: 20px;
 }
 
+/* PLANNING BOARD */
 #planning {
     display: flex;
     gap: 15px;
@@ -42,21 +46,44 @@ header {
     border-radius: 12px;
     padding: 12px;
     width: 100%;
+    border: 3px solid #d9c9a3;
+    box-shadow: 0 6px 0 #cbb98b;
 }
 
+.quarter h3 {
+    text-align: center;
+    background: #8b5a2b;
+    color: white;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* NOTES */
 .note {
     height: 60px;
     border-radius: 6px;
     margin-bottom: 10px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.2);
 }
 .yellow { background: #f3d45c; }
 .green { background: #7fcf8a; }
 .blue { background: #9ed0f6; }
 
+.note[contenteditable="true"] {
+    border: 2px dashed #c0392b;
+    cursor: text;
+}
+
+/* VOLUNTEER TABLE */
 table {
     width: 100%;
     border-collapse: collapse;
     background: #fffdf4;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid #d9c9a3;
 }
 
 th {
@@ -66,34 +93,64 @@ th {
 }
 
 td {
-    border: 1px solid #ccc;
+    border: 1px solid #d9c9a3;
     padding: 5px;
 }
 
+td button {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* RIGHT PANEL */
 #rightPanel {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
+/* MAP */
 #map {
     height: 250px;
+    border-radius: 12px;
+    border: 4px solid #6fa76f;
 }
 
+/* UPDATES */
 #updates {
     display: flex;
     gap: 10px;
 }
 
+#updates .label {
+    background: #f3d45c;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
 #updates .content {
     background: #fffdf4;
     flex: 1;
+    border-radius: 8px;
     padding: 12px;
+    border: 2px solid #d9c9a3;
 }
 
+#updates .content[contenteditable="true"] {
+    border: 2px dashed #c0392b;
+}
+
+/* FORM */
 #form {
     background: #fffdf4;
     padding: 15px;
+    border-radius: 12px;
+    border: 3px solid #d9c9a3;
 }
 
 button.submit {
@@ -101,6 +158,7 @@ button.submit {
     color: white;
     font-weight: bold;
     padding: 10px;
+    border-radius: 6px;
 }
 </style>
 </head>
@@ -111,11 +169,12 @@ button.submit {
 
 <div id="dashboard">
 
+<!-- SCHEDULE -->
 <div id="planning">
-    <div class="quarter"><h3>JAN–MAR</h3><div class="note yellow"></div></div>
-    <div class="quarter"><h3>APR–JUNE</h3><div class="note green"></div></div>
-    <div class="quarter"><h3>JULY–SEPT</h3><div class="note blue"></div></div>
-    <div class="quarter"><h3>OCT–DEC</h3><div class="note yellow"></div></div>
+    <div class="quarter"><h3>JAN–MAR</h3><div class="note yellow"></div><div class="note blue"></div><div class="note green"></div></div>
+    <div class="quarter"><h3>APR–JUNE</h3><div class="note green"></div><div class="note yellow"></div><div class="note blue"></div></div>
+    <div class="quarter"><h3>JULY–SEPT</h3><div class="note blue"></div><div class="note green"></div><div class="note yellow"></div></div>
+    <div class="quarter"><h3>OCT–DEC</h3><div class="note green"></div><div class="note yellow"></div><div class="note blue"></div></div>
 </div>
 
 <div style="grid-column:1 / span 2;">
@@ -128,7 +187,8 @@ button.submit {
     <div id="map"></div>
 
     <div id="updates">
-        <div class="content">General Updates...</div>
+        <div class="label">GENERAL UPDATES</div>
+        <div class="content">Loading...</div>
     </div>
 
     <div id="form">
@@ -148,14 +208,14 @@ button.submit {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  onSnapshot, 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  deleteDoc,
+  onSnapshot,
   doc,
-  enableIndexedDbPersistence
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -170,50 +230,78 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-enableIndexedDbPersistence(db).catch(() => {});
-
+/* ELEMENTS */
 const table = document.getElementById("volunteerTable");
 const form = document.getElementById("signupForm");
 const inputName = document.getElementById("name");
 const inputContact = document.getElementById("contact");
 const inputAvailability = document.getElementById("availability");
+const notes = document.querySelectorAll(".note");
+const updatesContent = document.querySelector("#updates .content");
 
 /* MAP */
 const map = L.map('map').setView([13.9360, 120.9250], 15);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 /* VOLUNTEERS */
-onSnapshot(collection(db, "volunteers"), snapshot => {
+onSnapshot(collection(db,"volunteers"), snap => {
   table.innerHTML = `<tr><th>Name</th><th>Contact</th><th>Availability</th><th>Action</th></tr>`;
-  snapshot.forEach(docSnap => addRow(docSnap));
+  snap.forEach(d => addRow(d));
 });
 
 form.addEventListener("submit", async e => {
   e.preventDefault();
-
-  await addDoc(collection(db, "volunteers"), {
+  await addDoc(collection(db,"volunteers"),{
     name: inputName.value,
     contact: inputContact.value,
     availability: inputAvailability.value,
     created: Date.now()
   });
-
   form.reset();
 });
 
-function addRow(docSnap) {
-  const v = docSnap.data();
+function addRow(d){
+  const v = d.data();
   const r = table.insertRow();
   r.insertCell().innerText = v.name;
   r.insertCell().innerText = v.contact;
   r.insertCell().innerText = v.availability;
-
   const c = r.insertCell();
   const b = document.createElement("button");
   b.innerText = "Delete";
-  b.onclick = () => deleteDoc(doc(db, "volunteers", docSnap.id));
+  b.onclick = ()=>deleteDoc(doc(db,"volunteers",d.id));
   c.appendChild(b);
 }
+
+/* SCHEDULE */
+notes.forEach((note,idx)=>{
+  note.contentEditable = true;
+  note.addEventListener("blur", async ()=>{
+    await setDoc(doc(db,"schedule",`note${idx}`),{
+      content: note.innerText
+    });
+  });
+});
+
+onSnapshot(collection(db,"schedule"), snap => {
+  snap.forEach(d=>{
+    const i = parseInt(d.id.replace("note",""));
+    if(notes[i]) notes[i].innerText = d.data().content;
+  });
+});
+
+/* GENERAL UPDATES */
+updatesContent.contentEditable = true;
+
+updatesContent.addEventListener("blur", async ()=>{
+  await setDoc(doc(db,"generalUpdates","agoncillo"),{
+    content: updatesContent.innerText
+  });
+});
+
+onSnapshot(doc(db,"generalUpdates","agoncillo"), d=>{
+  if(d.exists()) updatesContent.innerText = d.data().content;
+});
 </script>
 
 </body>

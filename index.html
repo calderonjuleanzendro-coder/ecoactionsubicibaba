@@ -218,22 +218,6 @@ button.submit {
 <!-- LEAFLET SCRIPT -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- MODULAR FIREBASE SCRIPT -->
-<script type="module">
-import { initializeApp } from "https://ecoactionibaba-default-rtdb.asia-southeast1.firebasedatabase.app/";
-import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc } from "https://ecoactionibaba-default-rtdb.asia-southeast1.firebasedatabase.app/";
-
-/* FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
-};
-
-/* INITIALIZE FIREBASE */
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 /* ELEMENT REFERENCES */
 const table = document.getElementById("volunteerTable");
 const form = document.getElementById("signupForm");
@@ -326,3 +310,4 @@ onSnapshot(collection(db, "generalUpdates"), snapshot => {
 
 </body>
 </html>
+

@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+   <title>Hello, Subic Ibaba!</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+      <h1 class="title">Hello Subic Ibaba!</h1>
+      <p id="currentTime"></p>
+      <script src="script.js"></script>
 <meta charset="UTF-8">
 <title>Subic Ibaba Eco Action</title>
 
@@ -71,6 +78,7 @@ header {
 .green { background: #7fcf8a; }
 .blue { background: #9ed0f6; }
 
+/* Editable notes */
 .note[contenteditable="true"] {
     border: 2px dashed #c0392b;
     cursor: text;
@@ -106,6 +114,10 @@ td button {
     cursor: pointer;
 }
 
+td button:hover {
+    background: #922b21;
+}
+
 /* RIGHT PANEL */
 #rightPanel {
     display: flex;
@@ -118,6 +130,7 @@ td button {
     height: 250px;
     border-radius: 12px;
     border: 4px solid #6fa76f;
+    box-shadow: 0 5px 0 #4c7c4c;
 }
 
 /* UPDATES */
@@ -141,8 +154,10 @@ td button {
     border: 2px solid #d9c9a3;
 }
 
+/* Editable updates */
 #updates .content[contenteditable="true"] {
     border: 2px dashed #c0392b;
+    cursor: text;
 }
 
 /* FORM */
@@ -177,18 +192,20 @@ button.submit {
     <div class="quarter"><h3>OCT–DEC</h3><div class="note green"></div><div class="note yellow"></div><div class="note blue"></div></div>
 </div>
 
+<!-- VOLUNTEER TABLE BELOW SCHEDULE -->
 <div style="grid-column:1 / span 2;">
 <table id="volunteerTable">
 <tr><th>Name</th><th>Contact</th><th>Availability</th><th>Action</th></tr>
 </table>
 </div>
 
+<!-- RIGHT PANEL -->
 <div id="rightPanel">
     <div id="map"></div>
 
     <div id="updates">
         <div class="label">GENERAL UPDATES</div>
-        <div class="content">Loading...</div>
+        <div class="content">Latest updates about Agoncillo, Batangas will appear here. Example: Community clean-up schedule, announcements, or local news.</div>
     </div>
 
     <div id="form">
@@ -197,40 +214,34 @@ button.submit {
             <input id="name" placeholder="Name" required>
             <input id="contact" placeholder="Contact" required>
             <textarea id="availability" placeholder="Availability" required></textarea>
-            <button class="submit" type="submit">Add Volunteer</button>
+            <button class="submit">Add Volunteer</button>
         </form>
+        <p id="msg"></p>
     </div>
 </div>
 
 </div>
 
+<!-- LEAFLET SCRIPT -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<!-- MODULAR FIREBASE SCRIPT -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  deleteDoc,
-  onSnapshot,
-  doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyDOIEqttkf43bV61HLpbDDYt7yr92I13Zg",
-  authDomain: "ecoactionibaba.firebaseapp.com",
-  projectId: "ecoactionibaba",
-  storageBucket: "ecoactionibaba.firebasestorage.app",
-  messagingSenderId: "367012227040",
-  appId: "1:367012227040:web:3b7c517cba2b6ee4c0ad85"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID"
 };
 
+/* INITIALIZE FIREBASE */
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ELEMENTS */
+/* ELEMENT REFERENCES */
 const table = document.getElementById("volunteerTable");
 const form = document.getElementById("signupForm");
 const inputName = document.getElementById("name");
@@ -242,65 +253,81 @@ const updatesContent = document.querySelector("#updates .content");
 /* MAP */
 const map = L.map('map').setView([13.9360, 120.9250], 15);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.polygon([[13.9375,120.9235],[13.9375,120.9275],[13.9345,120.9275],[13.9345,120.9235]],{
+    color:'red', fillColor:'#f56565', fillOpacity:0.6
+}).addTo(map).bindPopup("Needs Cleaning");
 
-/* VOLUNTEERS */
-onSnapshot(collection(db,"volunteers"), snap => {
-  table.innerHTML = `<tr><th>Name</th><th>Contact</th><th>Availability</th><th>Action</th></tr>`;
-  snap.forEach(d => addRow(d));
+/* REAL-TIME SCHEDULE SYNC */
+notes.forEach((note, idx) => {
+    note.setAttribute("contenteditable", "true");
+    note.addEventListener("blur", async () => {
+        const noteRef = doc(db, "schedule", `note${idx}`);
+        await updateDoc(noteRef, { content: note.innerText }).catch(async () => {
+            await addDoc(collection(db, "schedule"), { id: `note${idx}`, content: note.innerText });
+        });
+    });
+});
+
+onSnapshot(collection(db, "schedule"), snapshot => {
+    snapshot.forEach(docSnap => {
+        const idx = parseInt(docSnap.id.replace("note",""));
+        if (notes[idx]) notes[idx].innerText = docSnap.data().content;
+    });
+});
+
+/* VOLUNTEER TABLE */
+onSnapshot(collection(db, "volunteers"), snapshot => {
+    table.innerHTML = `
+      <tr>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Availability</th>
+        <th>Action</th>
+      </tr>`;
+    snapshot.forEach(docSnap => addRow(docSnap));
 });
 
 form.addEventListener("submit", async e => {
-  e.preventDefault();
-  await addDoc(collection(db,"volunteers"),{
-    name: inputName.value,
-    contact: inputContact.value,
-    availability: inputAvailability.value,
-    created: Date.now()
-  });
-  form.reset();
+    e.preventDefault();
+    if (!inputName.value || !inputContact.value || !inputAvailability.value) return;
+    await addDoc(collection(db, "volunteers"), {
+        name: inputName.value,
+        contact: inputContact.value,
+        availability: inputAvailability.value
+    });
+    form.reset();
 });
 
-function addRow(d){
-  const v = d.data();
-  const r = table.insertRow();
-  r.insertCell().innerText = v.name;
-  r.insertCell().innerText = v.contact;
-  r.insertCell().innerText = v.availability;
-  const c = r.insertCell();
-  const b = document.createElement("button");
-  b.innerText = "Delete";
-  b.onclick = ()=>deleteDoc(doc(db,"volunteers",d.id));
-  c.appendChild(b);
+function addRow(docSnap){
+    const v = docSnap.data();
+    const r = table.insertRow();
+    r.insertCell().innerText = v.name;
+    r.insertCell().innerText = v.contact;
+    r.insertCell().innerText = v.availability;
+
+    const c = r.insertCell();
+    const b = document.createElement("button");
+    b.innerText = "Delete";
+    b.onclick = () => deleteDoc(doc(db, "volunteers", docSnap.id));
+    c.appendChild(b);
 }
 
-/* SCHEDULE */
-notes.forEach((note,idx)=>{
-  note.contentEditable = true;
-  note.addEventListener("blur", async ()=>{
-    await setDoc(doc(db,"schedule",`note${idx}`),{
-      content: note.innerText
+/* GENERAL UPDATES ABOUT AGONCILLO - editable */
+updatesContent.setAttribute("contenteditable", "true");
+updatesContent.addEventListener("blur", async () => {
+    const updatesRef = doc(db, "generalUpdates", "agoncillo");
+    await updateDoc(updatesRef, { content: updatesContent.innerText }).catch(async () => {
+        await addDoc(collection(db, "generalUpdates"), { id: "agoncillo", content: updatesContent.innerText });
     });
-  });
 });
 
-onSnapshot(collection(db,"schedule"), snap => {
-  snap.forEach(d=>{
-    const i = parseInt(d.id.replace("note",""));
-    if(notes[i]) notes[i].innerText = d.data().content;
-  });
-});
-
-/* GENERAL UPDATES */
-updatesContent.contentEditable = true;
-
-updatesContent.addEventListener("blur", async ()=>{
-  await setDoc(doc(db,"generalUpdates","agoncillo"),{
-    content: updatesContent.innerText
-  });
-});
-
-onSnapshot(doc(db,"generalUpdates","agoncillo"), d=>{
-  if(d.exists()) updatesContent.innerText = d.data().content;
+// Load updates from Firestore
+onSnapshot(collection(db, "generalUpdates"), snapshot => {
+    snapshot.forEach(docSnap => {
+        if(docSnap.id === "agoncillo") {
+            updatesContent.innerText = docSnap.data().content;
+        }
+    });
 });
 </script>
 

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Subic Ibaba Eco Action – Community Board</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    background: #3b2a1a;
+}
+
+/* ===== BULLETIN BOARD ===== */
+#board {
+    max-width: 1200px;
+    margin: 30px auto;
+    background: #6b4a2b;
+    border: 12px solid #3b2615;
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+/* ===== SIGNS ===== */
+.sign {
+    background: linear-gradient(#2f5d3a, #24492d);
+    color: #fff;
+    padding: 12px;
+    font-size: 22px;
+    font-weight: bold;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 10px;
+    border: 4px solid #1c3722;
+}
+
+/* ===== MAP PANEL ===== */
+#mapPanel {
+    background: #e6d7b8;
+    border: 6px solid #3b2615;
+    padding: 10px;
+}
+
+#map {
+    height: 420px;
+    border: 4px solid #5a4028;
+    position: relative;
+    z-index: 1;
+}
+
+.leaflet-container {
+    z-index: 1 !important;
+}
+
+/* ===== SCHEDULE PANEL ===== */
+#schedulePanel {
+    background: #4a2f19;
+    border: 6px solid #3b2615;
+    padding: 10px;
+}
+
+.scheduleBtn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    border: 3px solid rgba(0,0,0,0.3);
+}
+
+.scheduleBtn span {
+    background: #eee;
+    color: #333;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.green { background: #3f7f4f; }
+.blue  { background: #3a6fa5; }
+.orange{ background: #c26a1b; }
+.teal  { background: #2c7c7b; }
+.yellow{ background: #c9a227; }
+.red   { background: #a33b2e; }
+
+/* ===== MODAL FORM ===== */
+#modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+#modalBox {
+    background: #fffdf4;
+    padding: 20px;
+    width: 320px;
+    border-radius: 10px;
+    border: 5px solid #4c9a58;
+}
+
+#modalBox h3 {
+    margin-top: 0;
+    text-align: center;
+}
+
+#modalBox input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+#modalBox button {
+    width: 100%;
+    padding: 10px;
+    background: #4c9a58;
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.close {
+    text-align: center;
+    margin-top: 8px;
+    cursor: pointer;
+    color: #c0392b;
+}
+</style>
+</head>
+
+<body>
+
+<div id="board">
+
+    <!-- MAP -->
+    <div id="mapPanel">
+        <div class="sign">🧭 EXPLORE THE AREA</div>
+        <div id="map"></div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div id="schedulePanel">
+        <div class="sign">📅 CLICKABLE SCHEDULE</div>
+
+        <div class="scheduleBtn green" onclick="openForm('9:00 AM – Morning Hike')">
+            9:00 AM – Morning Hike <span>CLICK</span>
+        </div>
+
+        <div class="scheduleBtn blue" onclick="openForm('11:00 AM – Guided Tour')">
+            11:00 AM – Guided Tour <span>CLICK</span>
+        </div>
+
+        <div class="scheduleBtn orange" onclick="openForm('1:00 PM – Lunch Break')">
+            1:00 PM – Lunch Break <span>CLICK</span>
+        </div>
+
+        <div class="scheduleBtn teal" onclick="openForm('3:00 PM – Kayaking Trip')">
+            3:00 PM – Kayaking Trip <span>CLICK</span>
+        </div>
+
+        <div class="scheduleBtn yellow" onclick="openForm('5:00 PM – Wildlife Viewing')">
+            5:00 PM – Wildlife Viewing <span>CLICK</span>
+        </div>
+
+        <div class="scheduleBtn red" onclick="openForm('7:00 PM – Campfire Gathering')">
+            7:00 PM – Campfire Gathering <span>CLICK</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- SIGN-UP MODAL -->
+<div id="modal">
+    <div id="modalBox">
+        <h3>Event Sign-Up</h3>
+        <p id="selectedSchedule"></p>
+        <input id="name" placeholder="Name" required>
+        <input id="contact" placeholder="Contact No." required>
+        <input id="email" type="email" placeholder="Email" required>
+        <input id="confirmEmail" type="email" placeholder="Confirm Email" required>
+        <button onclick="submitForm()">Submit</button>
+        <div class="close" onclick="closeForm()">Cancel</div>
+    </div>
+</div>
+
+<!-- LEAFLET MAP -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- EMAILJS SDK -->
+<script type="text/javascript" src="https://cdn.emailjs.com/sdk/3.2/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
+   })();
+</script>
+
+<script>
+/* ===== MAP ===== */
+const map = L.map('map').setView([13.9462608,120.94088389], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+L.polygon([[13.94965871,120.9408106],[13.94969433,120.94081056],[13.94973678,120.94102123],[13.9497206,120.94101883]],
+{ color:'red', fillColor:'#f56565', fillOpacity:0.6 }).addTo(map).bindPopup("Needs Cleaning");
+
+L.polygon([[13.95019297,120.93941406],[13.95023971,120.93943898],[13.95015354,120.93954712],[13.950148107,120.93954624]],
+{ color:'red', fillColor:'#f56565', fillOpacity:0.6 }).addTo(map).bindPopup("Needs Cleaning");
+
+L.polygon([[13.9501333,120.93956394],[13.95015034,120.93955586],[13.95008737,120.9400602],[13.95007683,120.94006699]],
+{ color:'red', fillColor:'#f56565', fillOpacity:0.6 }).addTo(map).bindPopup("Needs Cleaning");
+
+L.polygon([[13.94760165,120.94475761],[13.94760053,120.94474366],[13.94826218,120.94444513],[13.94827686,120.94449015]],
+{ color:'red', fillColor:'#f56565', fillOpacity:0.6 }).addTo(map).bindPopup("Needs Cleaning");
+
+/* ===== MODAL LOGIC ===== */
+let chosenSchedule = "";
+
+function openForm(schedule) {
+    chosenSchedule = schedule;
+    document.getElementById("selectedSchedule").innerText =
+        "Selected: " + schedule;
+    document.getElementById("modal").style.display = "flex";
+    map.dragging.disable();
+    map.scrollWheelZoom.disable();
+}
+
+function closeForm() {
+    document.getElementById("modal").style.display = "none";
+    map.dragging.enable();
+    map.scrollWheelZoom.enable();
+}
+
+/* ===== FORM SUBMISSION WITH EMAILJS ===== */
+function submitForm() {
+    const userName = document.getElementById("name").value.trim();
+    const userContact = document.getElementById("contact").value.trim();
+    const userEmail = document.getElementById("email").value.trim();
+    const confirmEmail = document.getElementById("confirmEmail").value.trim();
+
+    if (!userName || !userContact || !userEmail) {
+        alert("Please fill out all fields.");
+        return;
+    }
+
+    if (userEmail !== confirmEmail) {
+        alert("Email and Confirm Email do not match. Please check.");
+        return;
+    }
+
+    // EmailJS template parameters
+    const templateParams = {
+        to_name: userName,
+        to_email: userEmail,
+        contact: userContact,
+        schedule: chosenSchedule
+    };
+
+    emailjs.send("service_yhv7tg9", "template_8jpvutf", templateParams)
+        .then(function(response) {
+            console.log('SUCCESS!', response.status, response.text);
+            alert("Thank you for signing up! A confirmation email has been sent to " + userEmail);
+            closeForm();
+        }, function(error) {
+            console.log('FAILED...', error);
+            alert("Sign-up successful, but confirmation email could not be sent.");
+            closeForm();
+        });
+}
+</script>
+
+</body>
+</html>

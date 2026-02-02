@@ -15,6 +15,17 @@ body {
     background: #3b2a1a;
 }
 
+/* ===== HEADER ===== */
+header {
+    background: #4c9a58;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    font-size: 32px;
+    font-weight: bold;
+    border-bottom: 6px solid #3b2615;
+}
+
 /* ===== BULLETIN BOARD ===== */
 #board {
     max-width: 1200px;
@@ -146,6 +157,9 @@ body {
 
 <body>
 
+<!-- HEADER -->
+<header>Subic Ibaba Eco-Action</header>
+
 <div id="board">
 
     <!-- MAP -->
@@ -158,28 +172,28 @@ body {
     <div id="schedulePanel">
         <div class="sign">📅 CLICKABLE SCHEDULE</div>
 
-        <div class="scheduleBtn green" onclick="openForm('9:00 AM – Morning Hike')">
-            9:00 AM – Morning Hike <span>CLICK</span>
+        <div class="scheduleBtn green" onclick="openForm('Jan. 18, Feb. 18, and March 18 - Cleanup')">
+            Jan. 18, Feb. 18, and March 18 - Cleanup <span>CLICK</span>
         </div>
 
-        <div class="scheduleBtn blue" onclick="openForm('11:00 AM – Guided Tour')">
-            11:00 AM – Guided Tour <span>CLICK</span>
+        <div class="scheduleBtn blue" onclick="openForm('Apr. 18, May 18, and June 18 - Cleanup')">
+            Apr. 18, May 18, and June 18 - Cleanup <span>CLICK</span>
         </div>
 
-        <div class="scheduleBtn orange" onclick="openForm('1:00 PM – Lunch Break')">
-            1:00 PM – Lunch Break <span>CLICK</span>
+        <div class="scheduleBtn orange" onclick="openForm('July 18, Aug. 18, and Sept. 18 - Cleanup')">
+            July 18, Aug. 18, and Sept. 18 - Cleanup <span>CLICK</span>
         </div>
 
-        <div class="scheduleBtn teal" onclick="openForm('3:00 PM – Kayaking Trip')">
-            3:00 PM – Kayaking Trip <span>CLICK</span>
+        <div class="scheduleBtn teal" onclick="openForm('October 18 - Cleanup')">
+            October 18 - Cleanup <span>CLICK</span>
         </div>
 
-        <div class="scheduleBtn yellow" onclick="openForm('5:00 PM – Wildlife Viewing')">
-            5:00 PM – Wildlife Viewing <span>CLICK</span>
+        <div class="scheduleBtn yellow" onclick="openForm('November 18 - Cleanup')">
+            November 18 - Cleanup <span>CLICK</span>
         </div>
 
-        <div class="scheduleBtn red" onclick="openForm('7:00 PM – Campfire Gathering')">
-            7:00 PM – Campfire Gathering <span>CLICK</span>
+        <div class="scheduleBtn red" onclick="openForm('December 18 - Campfire Gathering')">
+            December 18 - Campfire Gathering <span>CLICK</span>
         </div>
     </div>
 
@@ -206,7 +220,7 @@ body {
 <script type="text/javascript" src="https://cdn.emailjs.com/sdk/3.2/email.min.js"></script>
 <script type="text/javascript">
    (function(){
-      emailjs.init("user_J5C31ikXLLyhyLsdT"); // Replace with your EmailJS User ID
+      emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
    })();
 </script>
 
@@ -262,12 +276,28 @@ function submitForm() {
         return;
     }
 
+    // Format the message for professional email
+    const message = `
+Hello ${userName},
+
+Thank you for signing up for Subic Ibaba Eco-Action!
+
+Here are your event details:
+
+Schedule: ${chosenSchedule}
+Contact: ${userContact}
+
+We look forward to seeing you at the event!
+
+Best regards,
+Subic Ibaba Eco-Action Team
+`;
+
     // EmailJS template parameters
     const templateParams = {
         to_name: userName,
         to_email: userEmail,
-        contact: userContact,
-        schedule: chosenSchedule
+        message: message
     };
 
     emailjs.send("service_yhv7tg9", "template_8jpvutf", templateParams)

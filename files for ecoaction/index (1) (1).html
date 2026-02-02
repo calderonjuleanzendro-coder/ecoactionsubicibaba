@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Subic Ibaba Eco Action</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/* (same styles you had, shortened here for clarity) */
+body{margin:0;font-family:Arial;background:#eef5ea}
+header{background:#4c9a58;color:#fff;text-align:center;padding:20px;font-size:30px}
+#dashboard{display:grid;grid-template-columns:3fr 2fr;gap:20px;padding:20px}
+.note{height:60px;margin:5px;border-radius:6px}
+.yellow{background:#f3d45c}.green{background:#7fcf8a}.blue{background:#9ed0f6}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border:1px solid #ccc;padding:8px;text-align:left}
+#map{height:250px}
+#updates .content{border:1px solid #ccc;padding:10px}
+</style>
+</head>
+
+<body>
+<header>Subic Ibaba Eco Action</header>
+
+<div id="dashboard">
+
+<div id="planning">
+    <div class="note yellow"></div>
+    <div class="note blue"></div>
+    <div class="note green"></div>
+</div>
+
+<table id="volunteerTable">
+<tr><th>Name</th><th>Contact</th><th>Availability</th><th>Action</th></tr>
+</table>
+
+<div id="rightPanel">
+    <div id="map"></div>
+
+    <div id="updates">
+        <div class="content"></div>
+    </div>
+
+    <form id="signupForm">
+        <input id="name" placeholder="Name" required>
+        <input id="contact" placeholder="Contact" required>
+        <textarea id="availability" placeholder="Availability" required></textarea>
+        <button>Add Volunteer</button>
+    </form>
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
